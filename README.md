@@ -76,12 +76,15 @@ update to reflect the newly added player.
 
 #### (Optional challenge) Choose a team for the new puppy
 
-In the new puppy form, use [<select>](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/select)
+In the new puppy form, use [select](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/select)
 to allow users to choose a team for the puppy to join.
 
-- The _default_ option has no value i.e. the player is unassigned.
+- The value of the _default_ option is an empty string to indicate that
+  the puppy is not assigned to a team.
 - Map over the array of teams from the API to create `<option>` elements where
   the _value_ of the option is the team ID and the _text_ of the option is the team name.
+- Use [`append`](https://developer.mozilla.org/en-US/docs/Web/API/Element/append)
+  instead of `replaceChildren` to avoid overwriting the default option.
 
 ## Submission
 
