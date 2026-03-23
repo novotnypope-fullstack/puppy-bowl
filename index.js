@@ -1,13 +1,11 @@
-// === Constants ===
 const BASE = "https://fsa-puppy-bowl.herokuapp.com/api";
 const COHORT = "/2601-beatdump";
 const API = BASE + COHORT;
 
-// === State ===
 let allPlayers = [];
+let allTeams = [];
 let selectedPlayer = null;
 
-// === API Calls ===
 async function fetchAllPlayers() {
   try {
     const res = await fetch(`${API}/players`);
@@ -16,6 +14,16 @@ async function fetchAllPlayers() {
     render();
   } catch (err) {
     console.error("Error fetching players:", err);
+  }
+}
+
+async function fetchAllTeams() {
+  try {
+    const res = await fetch(`${API}/teams`);
+    const data = await res.json();
+    allTeams = data.data.teams;
+  } catch (err) {
+    console.error("Error fetching teams:", err);
   }
 }
 
@@ -45,19 +53,24 @@ async function addPlayer(name, breed, teamId) {
     const body = { name, breed };
     if (teamId) body.teamId = teamId;
     
-    const res = await fetch(`${API}/players`, {
+    await fetch(`${API}/players`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)
     });
-    const data = await res.json();
     await fetchAllPlayers();
+    document.getElementById("addForm").reset();
   } catch (err) {
     console.error("Error adding player:", err);
   }
 }
 
-// === Render Functions ===
+function getTeamName(teamId) {
+  if (!teamId) return "Unassigned";
+  const team = allTeams.find(t => t.id === teamId);
+  return team ? team.name : "Unassigned";
+}
+
 function renderRoster() {
   return `
     <section id="roster">
@@ -76,11 +89,7 @@ function renderRoster() {
 
 function renderDetails() {
   if (!selectedPlayer) {
-    return `
-      <section id="details">
-        <p>Select a player to see details</p>
-      </section>
-    `;
+    return `<section id="details"><p>Select a player to see details</p></section>`;
   }
   
   return `
@@ -90,7 +99,7 @@ function renderDetails() {
       <p><strong>ID:</strong> ${selectedPlayer.id}</p>
       <p><strong>Breed:</strong> ${selectedPlayer.breed}</p>
       <p><strong>Status:</strong> ${selectedPlayer.status}</p>
-      <p><strong>Team:</strong> ${selectedPlayer.teamId ? selectedPlayer.teamId : "Unassigned"}</p>
+      <p><strong>Team:</strong> ${getTeamName(selectedPlayer.teamId)}</p>
       <button onclick="removePlayerClick(${selectedPlayer.id})">Remove from roster</button>
     </section>
   `;
@@ -100,11 +109,12 @@ function renderForm() {
   return `
     <section id="form">
       <h2>Add Puppy</h2>
-      <form onsubmit="handleFormSubmit(event)">
+      <form id="addForm" onsubmit="handleFormSubmit(event)">
         <input type="text" id="name" placeholder="Name" required />
         <input type="text" id="breed" placeholder="Breed" required />
         <select id="team">
           <option value="">Unassigned</option>
+          ${allTeams.map(team => `<option value="${team.id}">${team.name}</option>`).join("")}
         </select>
         <button type="submit">Add Puppy</button>
       </form>
@@ -124,7 +134,6 @@ function render() {
   `;
 }
 
-// === Event Handlers ===
 function selectPlayer(id) {
   fetchPlayerDetails(id);
 }
@@ -138,10 +147,12 @@ function handleFormSubmit(e) {
   const name = document.getElementById("name").value;
   const breed = document.getElementById("breed").value;
   const teamId = document.getElementById("team").value || null;
-  
   addPlayer(name, breed, teamId);
-  e.target.reset();
 }
 
-// === Init ===
-fetchAllPlayers();
+async function init() {
+  await fetchAllTeams();
+  await fetchAllPlayers();
+}
+
+init();
